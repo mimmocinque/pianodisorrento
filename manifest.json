@@ -1,6 +1,6 @@
 {
-  "name": "Comune di Villanova",
-  "short_name": "Villanova",
+  "name": "Comune di Piano di Sorrento",
+  "short_name": "Piano di Sorrento",
   "description": "L'app ufficiale del Comune: eventi, news, segnalazioni e numeri utili.",
   "start_url": "./index.html",
   "scope": "./",
