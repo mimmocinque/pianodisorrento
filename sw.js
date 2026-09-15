@@ -1,7 +1,7 @@
 // Service worker minimale: mette in cache l'app "shell" per il funzionamento offline.
 // Aggiorna CACHE_NAME ogni volta che pubblichi una nuova versione dei contenuti,
 // così i telefoni degli utenti scaricano la versione fresca invece di quella vecchia.
-const CACHE_NAME = "comune-app-v2";
+const CACHE_NAME = "comune-app-v3";
 const ASSETS = [
   "./",
   "./index.html",
