@@ -8,7 +8,7 @@
 //
 // Alza CACHE_NAME solo se cambi i NOMI dei file delle icone o ne aggiungi
 // di nuovi — non serve più per i normali aggiornamenti di contenuto.
-const CACHE_NAME = "comune-app-v3";
+const CACHE_NAME = "comune-app-v6";
 const APP_SHELL = ["icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", event => {
