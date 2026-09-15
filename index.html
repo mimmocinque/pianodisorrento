@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comune di Villanova — App dei servizi civici</title>
+<meta name="description" content="App del Comune: eventi, news, segnalazioni e numeri utili.">
+<meta name="theme-color" content="#1F3A5F">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------------------------------------------------------
+     TOKEN DI DESIGN — MODIFICA QUI I COLORI DEL TUO COMUNE
+  --------------------------------------------------------- */
+  :root{
+    --notte:#1F3A5F;       /* colore istituzionale primario */
+    --notte-dark:#152A45;
+    --notte-tint:#EAF0F6;
+    --paper:#EAE3D3;       /* sfondo generale, tono travertino */
+    --paper-raised:#F5F1E6;/* sfondo carte/card */
+    --ink:#1C2B24;         /* testo principale */
+    --ink-soft:#5C6560;
+    --line:#D8CFB8;
+    --ocra:#C9922B;        /* accento — CTA, evidenze */
+    --ocra-dark:#A97A20;
+    --mattone:#B5502F;     /* segnalazioni / urgenze */
+    --ulivo:#6B7A4F;       /* eventi / esito positivo */
+    --radius-s:10px;
+    --radius-m:16px;
+    --radius-l:22px;
+    --shadow-card:0 1px 2px rgba(28,43,36,.06), 0 6px 20px rgba(28,43,36,.06);
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --nav-h:64px;
+    --topbar-h:56px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:var(--notte-dark);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+
+  button{font-family:inherit;}
+  a{color:inherit;}
+
+  /* ---------- Cornice app: piena larghezza su mobile, "telaio" su desktop ---------- */
+  #frame{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  @media (min-width:640px){
+    body{
+      background:
+        radial-gradient(1200px 800px at 50% -10%, #2A4A73 0%, var(--notte-dark) 55%);
+      padding:40px 16px;
+    }
+    #frame{
+      min-height:calc(100vh - 80px);
+      border-radius:28px;
+      overflow:hidden;
+      box-shadow:0 30px 70px rgba(0,0,0,.45);
+    }
+  }
+
+  /* ---------- Barra superiore ---------- */
+  #topbar{
+    height:var(--topbar-h);
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 16px;
+    background:var(--notte);
+    color:var(--paper-raised);
+  }
+  #topbar .brand{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+  }
+  #topbar .brand img{width:26px;height:26px;border-radius:7px;flex:0 0 auto;}
+  #topbar .brand-text{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #installBtn{
+    display:none;
+    align-items:center;
+    gap:6px;
+    background:var(--ocra);
+    color:#241804;
+    border:none;
+    border-radius:999px;
+    padding:7px 12px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  #installBtn.show{display:inline-flex;}
+
+  /* ---------- Avviso ---------- */
+  .avviso{
+    margin:14px 16px 0;
+    background:#F4E4DC;
+    border:1px solid #E3B7A2;
+    color:#7A3419;
+    border-radius:var(--radius-s);
+    padding:11px 12px;
+    font-size:13.5px;
+    line-height:1.45;
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
+  }
+  .avviso svg{flex:0 0 auto;margin-top:1px;}
+  .avviso button{
+    margin-left:auto;
+    background:none;border:none;color:#7A3419;
+    font-size:16px;line-height:1;cursor:pointer;opacity:.6;padding:0 0 0 8px;
+  }
+
+  /* ---------- Contenuto ---------- */
+  #main{
+    flex:1 1 auto;
+    overflow-y:auto;
+    padding:18px 16px calc(24px + var(--nav-h));
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .section-title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:23px;
+    letter-spacing:-.01em;
+    margin:2px 0 4px;
+  }
+  .section-sub{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 18px;
+  }
+
+  /* ---------- Home hero ---------- */
+  .hero{
+    background:linear-gradient(155deg, var(--notte) 0%, #2E4F78 100%);
+    color:var(--paper-raised);
+    border-radius:var(--radius-l);
+    padding:22px 20px 20px;
+    margin-bottom:18px;
+  }
+  .hero .eyebrow{font-size:13px;opacity:.75;margin:0 0 6px;}
+  .hero h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:26px;
+    line-height:1.15;
+    margin:0 0 14px;
+    max-width:22ch;
+  }
+  .hero-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.28);
+    color:var(--paper-raised);
+    padding:9px 13px;border-radius:999px;
+    font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .pill-btn.solid{
+    background:var(--ocra);border-color:var(--ocra);color:#241804;
+  }
+
+  .home-block{margin-bottom:24px;}
+  .home-block-head{
+    display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;
+  }
+  .home-block-head h2{
+    font-family:var(--font-display);font-weight:600;font-size:17px;margin:0;
+  }
+  .see-all{
+    font-size:12.5px;font-weight:600;color:var(--notte);
+    background:none;border:none;cursor:pointer;padding:0;
+  }
+
+  /* ---------- Card generiche ---------- */
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    box-shadow:var(--shadow-card);
+    padding:14px 15px;
+    margin-bottom:11px;
+  }
+  .card:last-child{margin-bottom:0;}
+
+  /* card evento in stile home (compatta orizzontale) */
+  .evt-row{display:flex;gap:12px;align-items:flex-start;}
+  .evt-date{
+    flex:0 0 auto;width:46px;text-align:center;
+    background:var(--notte-tint);color:var(--notte);
+    border-radius:10px;padding:6px 0;
+  }
+  .evt-date .d{font-family:var(--font-display);font-weight:700;font-size:18px;line-height:1;display:block;}
+  .evt-date .m{font-size:10px;text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:2px;}
+  .evt-body h3{font-size:14.5px;margin:0 0 3px;font-weight:600;}
+  .evt-meta{font-size:12.5px;color:var(--ink-soft);}
+  .tag{
+    display:inline-block;font-size:11px;font-weight:600;color:var(--ulivo);
+    background:#EAEEDF;border-radius:6px;padding:2px 7px;margin-top:6px;
+  }
+
+  .month-heading{
+    font-size:12.5px;font-weight:700;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.05em;
+    margin:20px 0 9px;
+  }
+  .month-heading:first-child{margin-top:0;}
+
+  /* news */
+  .news-item h3{font-size:15px;margin:0 0 4px;font-weight:600;}
+  .news-item time{font-size:12px;color:var(--ink-soft);}
+  .news-item p{font-size:13.5px;line-height:1.55;margin:7px 0 0;color:#3A443E;}
+  .news-item button{
+    margin-top:7px;background:none;border:none;color:var(--notte);
+    font-size:12.5px;font-weight:700;cursor:pointer;padding:0;
+  }
+  .news-item p.clamped{
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+
+  /* ---------- Form segnalazioni ---------- */
+  .field{margin-bottom:15px;}
+  .field label{
+    display:block;font-size:13px;font-weight:600;margin-bottom:6px;
+  }
+  .field .hint{font-size:12px;color:var(--ink-soft);margin-top:5px;}
+  select, textarea, input[type=text], input[type=tel], input[type=email]{
+    width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);
+    background:var(--paper-raised);border:1px solid var(--line);
+    border-radius:var(--radius-s);padding:11px 12px;
+  }
+  select:focus, textarea:focus, input:focus{
+    outline:2px solid var(--notte);outline-offset:1px;
+  }
+  textarea{resize:vertical;min-height:88px;line-height:1.5;}
+  .loc-row{display:flex;gap:8px;}
+  .loc-row input{flex:1;}
+  .btn-ghost{
+    flex:0 0 auto;border:1px solid var(--line);background:var(--paper-raised);
+    border-radius:var(--radius-s);padding:0 12px;font-size:12.5px;font-weight:600;
+    cursor:pointer;color:var(--notte);
+  }
+  .btn-primary{
+    width:100%;background:var(--mattone);color:#FBEFE9;border:none;
+    border-radius:var(--radius-s);padding:13px;font-size:15px;font-weight:700;
+    cursor:pointer;
+  }
+  .btn-primary:active{background:#943F24;}
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .cat-chip{
+    border:1px solid var(--line);background:var(--paper-raised);
+    border-radius:var(--radius-s);padding:10px 10px;font-size:13px;font-weight:600;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;
+  }
+  .cat-chip[aria-pressed="true"]{
+    border-color:var(--mattone);background:#F7E9E3;color:#7A3419;
+  }
+  .form-note{
+    background:var(--notte-tint);border-radius:var(--radius-s);
+    padding:11px 12px;font-size:12.5px;line-height:1.5;color:var(--notte-dark);margin-bottom:16px;
+  }
+  .confirm-box{
+    background:#EAEEDF;border:1px solid #C9D6B4;color:#3E4A2A;
+    border-radius:var(--radius-s);padding:12px;font-size:13.5px;margin-top:12px;
+    display:none;
+  }
+  .confirm-box.show{display:block;}
+
+  /* ---------- Info: sotto-tab ---------- */
+  .subtabs{display:flex;gap:8px;margin-bottom:16px;}
+  .subtab{
+    flex:1;text-align:center;padding:9px;border-radius:999px;
+    border:1px solid var(--line);background:var(--paper-raised);
+    font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);
+  }
+  .subtab[aria-selected="true"]{background:var(--notte);color:var(--paper-raised);border-color:var(--notte);}
+
+  .contact-group{margin-bottom:20px;}
+  .contact-group h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 9px;}
+  .contact-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:11px 0;border-bottom:1px solid var(--line);
+  }
+  .contact-row:last-child{border-bottom:none;}
+  .contact-row .name{font-size:14px;font-weight:600;}
+  .contact-row .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .call-btn{
+    flex:0 0 auto;background:var(--notte-tint);color:var(--notte);
+    border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700;
+    text-decoration:none;
+  }
+
+  .line-card summary{
+    font-family:var(--font-display);font-weight:600;font-size:15.5px;
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;
+  }
+  .line-card summary::-webkit-details-marker{display:none;}
+  .line-card summary .chev{transition:transform .18s ease;}
+  .line-card[open] summary .chev{transform:rotate(180deg);}
+  table.orari{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+  table.orari th{
+    text-align:left;font-size:11px;text-transform:uppercase;color:var(--ink-soft);
+    letter-spacing:.03em;padding-bottom:6px;border-bottom:1px solid var(--line);
+  }
+  table.orari td{padding:6px 0;border-bottom:1px dashed var(--line);}
+  table.orari tr:last-child td{border-bottom:none;}
+
+  /* ---------- Nav inferiore ---------- */
+  #bottomnav{
+    flex:0 0 auto;height:var(--nav-h);
+    display:flex;
+    background:var(--paper-raised);
+    border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .nav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:6px 2px 0;
+  }
+  .nav-btn svg{width:22px;height:22px;}
+  .nav-btn span{font-size:10.5px;font-weight:600;}
+  .nav-btn[aria-current="page"]{color:var(--notte);}
+  .nav-btn.emphasis[aria-current="page"]{color:var(--mattone);}
+
+  /* animazione ingresso, una sola volta */
+  .enter{animation:enter .5s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes enter{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  .visually-hidden{
+    position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="frame">
+
+  <header id="topbar">
+    <div class="brand">
+      <img src="icon-192.png" alt="">
+      <span class="brand-text" id="topbarTitle">Comune di Villanova</span>
+    </div>
+    <button id="installBtn" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>
+      Installa
+    </button>
+  </header>
+
+  <main id="main" aria-live="polite"></main>
+
+  <nav id="bottomnav" aria-label="Navigazione principale">
+    <button class="nav-btn" data-tab="home" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-btn" data-tab="eventi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3"/></svg>
+      <span>Eventi</span>
+    </button>
+    <button class="nav-btn" data-tab="news">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9.5h8M8 13h8M8 16.5h5"/></svg>
+      <span>News</span>
+    </button>
+    <button class="nav-btn emphasis" data-tab="segnala">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg>
+      <span>Segnala</span>
+    </button>
+    <button class="nav-btn" data-tab="info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></svg>
+      <span>Info</span>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURAZIONE — QUESTA È LA PARTE DA PERSONALIZZARE PER IL TUO COMUNE
+   ===================================================================== */
+const CONFIG = {
+  nome: "Comune di Villanova",
+  nomeBreve: "Villanova",
+  slogan: "I servizi del Comune, sempre a portata di mano.",
+  indirizzoMunicipio: "Piazza Municipio, 1 — 00000 Villanova",
+  telefonoCentralino: "+39 0000 000000",
+  emailSegnalazioni: "segnalazioni@comune-villanova.it",
+  pec: "comune.villanova@pec.it",
+  sitoIstituzionale: "https://www.comune.villanova.it",
+  avviso: {
+    attivo: true,
+    testo: "Anagrafe chiusa al pubblico venerdì 19 settembre per aggiornamento dei sistemi informatici."
+  }
+};
+
+/* Contenuti di esempio: sostituisci con quelli reali del tuo Comune.
+   In una versione più avanzata questi array potrebbero arrivare da un
+   foglio Google, un piccolo CMS o un file JSON esterno invece che da qui. */
+const DATA = {
+  eventi: [
+    { data:"2026-09-20", ora:"18:30", titolo:"Festa di fine estate", luogo:"Piazza Municipio", categoria:"Sagra" },
+    { data:"2026-09-27", ora:"10:00", titolo:"Mercatino dell'artigianato", luogo:"Corso Vittorio Emanuele", categoria:"Mercato" },
+    { data:"2026-10-04", ora:"21:00", titolo:"Concerto della Banda Comunale", luogo:"Teatro Comunale", categoria:"Cultura" },
+    { data:"2026-10-12", ora:"9:00", titolo:"Fiera d'autunno", luogo:"Area mercatale", categoria:"Sagra" },
+    { data:"2026-10-18", ora:"17:00", titolo:"Presentazione del libro \"Storie di paese\"", luogo:"Biblioteca comunale", categoria:"Cultura" },
+    { data:"2026-11-01", ora:"11:00", titolo:"Commemorazione dei defunti", luogo:"Cimitero comunale", categoria:"Istituzionale" }
+  ],
+  news: [
+    { data:"2026-09-14", titolo:"Al via i lavori di riasfaltatura di via Roma", testo:"Da lunedì 21 settembre prenderanno il via i lavori di riasfaltatura del tratto di via Roma compreso tra piazza Garibaldi e via Dante. La circolazione sarà regolata a senso unico alternato. Si prevede il completamento dei lavori entro la fine del mese, salvo condizioni meteo avverse." },
+    { data:"2026-09-10", titolo:"Nuovi orari dello sportello anagrafe", testo:"A partire dal 1° ottobre lo sportello anagrafe osserverà i seguenti orari: lunedì, mercoledì e venerdì dalle 9:00 alle 13:00; martedì e giovedì anche dalle 15:00 alle 17:30. Resta invariata la possibilità di prenotare online tramite il sito istituzionale." },
+    { data:"2026-09-02", titolo:"Contributi per le famiglie numerose: domande entro il 30 settembre", testo:"È possibile presentare domanda per il contributo comunale destinato alle famiglie con tre o più figli minori entro il 30 settembre 2026. La modulistica è disponibile presso l'ufficio Servizi Sociali e sul sito istituzionale del Comune." },
+    { data:"2026-08-25", titolo:"Raccolta differenziata: distribuzione nuovi mastelli", testo:"Nelle prossime settimane verranno distribuiti i nuovi mastelli per la raccolta differenziata porta a porta nelle zone non ancora coperte dal servizio. Il calendario di distribuzione sarà comunicato quartiere per quartiere." }
+  ],
+  categorieSegnalazione: [
+    "Buche stradali", "Illuminazione pubblica", "Rifiuti e decoro urbano",
+    "Verde pubblico", "Segnaletica", "Altro"
+  ],
+  contatti: [
+    { gruppo:"Uffici comunali", voci:[
+      { nome:"Centralino", tel:"+390000000000", note:"Lun–Ven 9:00–13:00" },
+      { nome:"Ufficio Anagrafe", tel:"+390000000001", note:"Lun, Mer, Ven 9:00–13:00" },
+      { nome:"Ufficio Tecnico", tel:"+390000000002", note:"Mar, Gio 9:00–12:30" },
+      { nome:"Servizi Sociali", tel:"+390000000003", note:"Lun–Ven 9:00–12:00" }
+    ]},
+    { gruppo:"Emergenze e reperibilità", voci:[
+      { nome:"Emergenza sanitaria", tel:"112", note:"Numero unico emergenze" },
+      { nome:"Vigili del Fuoco", tel:"115", note:"" },
+      { nome:"Polizia Locale", tel:"+390000000009", note:"Reperibilità 24h" },
+      { nome:"Farmacia di turno", tel:"+390000000010", note:"Aggiornata settimanalmente" },
+      { nome:"Guasti acqua/gas", tel:"+390000000011", note:"Numero verde 24h" }
+    ]}
+  ],
+  trasporti: [
+    { linea:"Linea 1 — Centro / Stazione FS", feriale:["6:15","7:00","7:45","8:30","12:15","13:00","17:15","18:00","19:00"], festivo:["8:30","10:30","13:00","17:30","19:30"] },
+    { linea:"Linea 2 — Villanova / Capoluogo", feriale:["6:40","7:40","9:10","12:40","14:10","16:40","18:40"], festivo:["9:00","12:00","17:00"] },
+    { linea:"Scuolabus — Circolare centro/scuole", feriale:["7:35","8:00","13:10","16:20"], festivo:["— non attivo —"] }
+  ]
+};
+
+/* =====================================================================
+   STATO E UTILITÀ
+   ===================================================================== */
+const state = { tab:"home", infoSub:"contatti", expandedNews:new Set() };
+const $main = document.getElementById("main");
+const $topbarTitle = document.getElementById("topbarTitle");
+
+function fmtDayMonth(iso){
+  const d = new Date(iso+"T00:00:00");
+  return {
+    day: d.toLocaleDateString("it-IT",{day:"numeric"}),
+    month: d.toLocaleDateString("it-IT",{month:"short"}).replace(".","")
+  };
+}
+function fmtFull(iso){
+  const d = new Date(iso+"T00:00:00");
+  return d.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"});
+}
+function fmtMonthHeading(iso){
+  const d = new Date(iso+"T00:00:00");
+  const s = d.toLocaleDateString("it-IT",{month:"long",year:"numeric"});
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* =====================================================================
+   RENDER PER SEZIONE
+   ===================================================================== */
+const TAB_TITLES = { home:CONFIG.nomeBreve, eventi:"Eventi", news:"News dal Comune", segnala:"Segnala un problema", info:"Numeri utili e trasporti" };
+
+function renderHome(){
+  const prossimiEventi = [...DATA.eventi].sort((a,b)=>a.data.localeCompare(b.data)).slice(0,2);
+  const ultimeNews = [...DATA.news].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,2);
+
+  const avvisoHtml = CONFIG.avviso.attivo ? `
+    <div class="avviso" id="avvisoBox">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg>
+      <div>${escapeHtml(CONFIG.avviso.testo)}</div>
+      <button type="button" data-action="chiudi-avviso" aria-label="Chiudi avviso">✕</button>
+    </div>` : "";
+
+  return `
+    ${avvisoHtml}
+    <div class="enter" style="padding-top:${CONFIG.avviso.attivo?'14px':'2px'}">
+      <div class="hero">
+        <p class="eyebrow">${escapeHtml(CONFIG.nome)}</p>
+        <h1>${escapeHtml(CONFIG.slogan)}</h1>
+        <div class="hero-actions">
+          <button class="pill-btn solid" data-action="tab" data-tab="segnala">Segnala un problema</button>
+          <button class="pill-btn" data-action="tab" data-tab="eventi">Vedi gli eventi</button>
+        </div>
+      </div>
+
+      <div class="home-block">
+        <div class="home-block-head">
+          <h2>Prossimi eventi</h2>
+          <button class="see-all" data-action="tab" data-tab="eventi">Tutti →</button>
+        </div>
+        ${prossimiEventi.map(evtCardCompact).join("")}
+      </div>
+
+      <div class="home-block">
+        <div class="home-block-head">
+          <h2>Ultime comunicazioni</h2>
+          <button class="see-all" data-action="tab" data-tab="news">Tutte →</button>
+        </div>
+        ${ultimeNews.map(n => `
+          <div class="card news-item">
+            <time>${fmtFull(n.data)}</time>
+            <h3>${escapeHtml(n.titolo)}</h3>
+          </div>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function evtCardCompact(e){
+  const {day,month} = fmtDayMonth(e.data);
+  return `
+    <div class="card evt-row">
+      <div class="evt-date"><span class="d">${day}</span><span class="m">${month}</span></div>
+      <div class="evt-body">
+        <h3>${escapeHtml(e.titolo)}</h3>
+        <div class="evt-meta">${e.ora} · ${escapeHtml(e.luogo)}</div>
+        <span class="tag">${escapeHtml(e.categoria)}</span>
+      </div>
+    </div>`;
+}
+
+function renderEventi(){
+  const ordinati = [...DATA.eventi].sort((a,b)=>a.data.localeCompare(b.data));
+  let lastMonth = null, html = "";
+  ordinati.forEach(e=>{
+    const mh = fmtMonthHeading(e.data);
+    if(mh !== lastMonth){ html += `<div class="month-heading">${mh}</div>`; lastMonth = mh; }
+    html += evtCardCompact(e);
+  });
+  return `
+    <h1 class="section-title enter">Eventi</h1>
+    <p class="section-sub enter">Tutti gli appuntamenti in programma nel territorio comunale.</p>
+    ${html}
+  `;
+}
+
+function renderNews(){
+  const ordinate = [...DATA.news].sort((a,b)=>b.data.localeCompare(a.data));
+  return `
+    <h1 class="section-title enter">News dal Comune</h1>
+    <p class="section-sub enter">Comunicati, avvisi e aggiornamenti dagli uffici comunali.</p>
+    ${ordinate.map((n,i)=>{
+      const expanded = state.expandedNews.has(i);
+      return `
+      <div class="card news-item">
+        <time>${fmtFull(n.data)}</time>
+        <h3>${escapeHtml(n.titolo)}</h3>
+        <p class="${expanded?'':'clamped'}">${escapeHtml(n.testo)}</p>
+        <button type="button" data-action="toggle-news" data-idx="${i}">${expanded?'Mostra meno':'Leggi tutto'}</button>
+      </div>`;
+    }).join("")}
+  `;
+}
+
+function renderSegnala(){
+  return `
+    <h1 class="section-title enter">Segnala un problema</h1>
+    <p class="section-sub enter">Il Comune riceve la tua segnalazione via email e la smista all'ufficio competente.</p>
+
+    <form data-form="segnalazione">
+      <div class="field">
+        <label>Cosa vuoi segnalare?</label>
+        <div class="cat-grid" id="catGrid">
+          ${DATA.categorieSegnalazione.map(c=>`<button type="button" class="cat-chip" data-cat="${escapeHtml(c)}" aria-pressed="false">${escapeHtml(c)}</button>`).join("")}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fLuogo">Dove si trova il problema</label>
+        <div class="loc-row">
+          <input type="text" id="fLuogo" name="luogo" placeholder="Es. Via Roma, davanti al civico 12" required>
+          <button type="button" class="btn-ghost" id="btnPosizione">📍 Usa posizione</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fDescrizione">Descrizione</label>
+        <textarea id="fDescrizione" name="descrizione" placeholder="Descrivi brevemente cosa hai notato e da quanto tempo" required></textarea>
+      </div>
+
+      <div class="field">
+        <label for="fNome">Il tuo nome (facoltativo)</label>
+        <input type="text" id="fNome" name="nome" placeholder="Nome e cognome">
+      </div>
+
+      <div class="field">
+        <label for="fContatto">Email o telefono per essere ricontattato (facoltativo)</label>
+        <input type="text" id="fContatto" name="contatto" placeholder="mario.rossi@email.it">
+      </div>
+
+      <div class="form-note">
+        Alla conferma si aprirà il tuo programma di posta con i dati già inseriti, pronto per essere inviato a
+        <strong>${escapeHtml(CONFIG.emailSegnalazioni)}</strong>. In alternativa puoi chiamare il numero
+        ${escapeHtml(CONFIG.telefonoCentralino)}.
+      </div>
+
+      <button type="submit" class="btn-primary">Prepara la segnalazione</button>
+      <div class="confirm-box" id="confirmBox">Segnalazione pronta: controlla la tua app email e invia il messaggio già compilato.</div>
+    </form>
+  `;
+}
+
+function renderInfo(){
+  const contattiHtml = DATA.contatti.map(g=>`
+    <div class="contact-group">
+      <h3>${escapeHtml(g.gruppo)}</h3>
+      ${g.voci.map(v=>`
+        <div class="contact-row">
+          <div>
+            <div class="name">${escapeHtml(v.nome)}</div>
+            ${v.note?`<div class="sub">${escapeHtml(v.note)}</div>`:""}
+          </div>
+          <a class="call-btn" href="tel:${v.tel}">Chiama</a>
+        </div>`).join("")}
+    </div>`).join("") + `
+    <div class="contact-group">
+      <h3>Sede e recapiti</h3>
+      <div class="contact-row"><div><div class="name">${escapeHtml(CONFIG.indirizzoMunicipio)}</div></div></div>
+      <div class="contact-row"><div><div class="name">PEC</div><div class="sub">${escapeHtml(CONFIG.pec)}</div></div></div>
+    </div>`;
+
+  const trasportiHtml = DATA.trasporti.map((l,i)=>`
+    <details class="card line-card" ${i===0?'open':''}>
+      <summary>${escapeHtml(l.linea)} <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <table class="orari">
+        <thead><tr><th>Feriali</th><th>Festivi</th></tr></thead>
+        <tbody>
+          ${Array.from({length:Math.max(l.feriale.length,l.festivo.length)}).map((_,r)=>`
+            <tr><td>${l.feriale[r]||""}</td><td>${l.festivo[r]||""}</td></tr>`).join("")}
+        </tbody>
+      </table>
+    </details>`).join("");
+
+  return `
+    <h1 class="section-title enter">Info utili</h1>
+    <p class="section-sub enter">Numeri di riferimento e orari dei trasporti pubblici locali.</p>
+    <div class="subtabs">
+      <button class="subtab" data-infosub="contatti" aria-selected="${state.infoSub==='contatti'}">Contatti</button>
+      <button class="subtab" data-infosub="trasporti" aria-selected="${state.infoSub==='trasporti'}">Trasporti</button>
+    </div>
+    ${state.infoSub === 'contatti' ? contattiHtml : trasportiHtml}
+  `;
+}
+
+const RENDERERS = { home:renderHome, eventi:renderEventi, news:renderNews, segnala:renderSegnala, info:renderInfo };
+
+function renderApp(){
+  $main.innerHTML = RENDERERS[state.tab]();
+  $topbarTitle.textContent = state.tab === "home" ? CONFIG.nomeBreve : TAB_TITLES[state.tab];
+  document.querySelectorAll(".nav-btn").forEach(b=>{
+    b.setAttribute("aria-current", b.dataset.tab === state.tab ? "page" : "false");
+  });
+  $main.scrollTop = 0;
+}
+
+function switchTab(tab){
+  state.tab = tab;
+  renderApp();
+}
+
+/* =====================================================================
+   EVENTI DELEGATI (un solo listener, funziona anche dopo ogni render)
+   ===================================================================== */
+document.getElementById("bottomnav").addEventListener("click", e=>{
+  const btn = e.target.closest(".nav-btn");
+  if(btn) switchTab(btn.dataset.tab);
+});
+
+document.getElementById("frame").addEventListener("click", e=>{
+  const tabBtn = e.target.closest('[data-action="tab"]');
+  if(tabBtn){ switchTab(tabBtn.dataset.tab); return; }
+
+  const closeAvviso = e.target.closest('[data-action="chiudi-avviso"]');
+  if(closeAvviso){ CONFIG.avviso.attivo = false; renderApp(); return; }
+
+  const newsToggle = e.target.closest('[data-action="toggle-news"]');
+  if(newsToggle){
+    const idx = Number(newsToggle.dataset.idx);
+    state.expandedNews.has(idx) ? state.expandedNews.delete(idx) : state.expandedNews.add(idx);
+    renderApp();
+    return;
+  }
+
+  const catChip = e.target.closest(".cat-chip");
+  if(catChip){
+    document.querySelectorAll(".cat-chip").forEach(c=>c.setAttribute("aria-pressed", c===catChip ? "true":"false"));
+    return;
+  }
+
+  const subtab = e.target.closest("[data-infosub]");
+  if(subtab){
+    state.infoSub = subtab.dataset.infosub;
+    renderApp();
+    return;
+  }
+
+  const posBtn = e.target.closest("#btnPosizione");
+  if(posBtn){
+    if(!navigator.geolocation){ alert("Geolocalizzazione non disponibile su questo dispositivo."); return; }
+    posBtn.textContent = "Localizzazione…";
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const {latitude, longitude} = pos.coords;
+        const input = document.getElementById("fLuogo");
+        input.value = (input.value ? input.value + " — " : "") + `coordinate ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        posBtn.textContent = "📍 Usa posizione";
+      },
+      ()=>{ alert("Non è stato possibile ottenere la posizione."); posBtn.textContent = "📍 Usa posizione"; }
+    );
+  }
+});
+
+document.getElementById("frame").addEventListener("submit", e=>{
+  const form = e.target.closest('[data-form="segnalazione"]');
+  if(!form) return;
+  e.preventDefault();
+
+  const categoria = document.querySelector('.cat-chip[aria-pressed="true"]')?.dataset.cat || "Non specificata";
+  const fd = new FormData(form);
+  const luogo = fd.get("luogo") || "";
+  const descrizione = fd.get("descrizione") || "";
+  const nome = fd.get("nome") || "";
+  const contatto = fd.get("contatto") || "";
+
+  const subject = `Segnalazione: ${categoria}`;
+  const bodyLines = [
+    `Categoria: ${categoria}`,
+    `Luogo: ${luogo}`,
+    `Descrizione: ${descrizione}`,
+    nome ? `Nome: ${nome}` : null,
+    contatto ? `Contatto per risposta: ${contatto}` : null
+  ].filter(Boolean);
+  const body = bodyLines.join("\n");
+
+  const mailto = `mailto:${CONFIG.emailSegnalazioni}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailto;
+
+  document.getElementById("confirmBox").classList.add("show");
+});
+
+/* =====================================================================
+   INSTALLAZIONE PWA
+   ===================================================================== */
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("installBtn").classList.add("show");
+});
+document.getElementById("installBtn").addEventListener("click", async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById("installBtn").classList.remove("show");
+});
+
+/* =====================================================================
+   SERVICE WORKER (solo quando l'app è ospitata su un vero server HTTPS)
+   ===================================================================== */
+if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{ /* ambiente di anteprima: ignora */ });
+  });
+}
+
+/* Avvio */
+renderApp();
+</script>
+</body>
+</html>
